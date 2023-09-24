@@ -89,7 +89,7 @@ class BancoDeDados:
         try:
             cursor = self.conn.cursor()
             cursor.execute("""
-            CREATE TABLE IF NOT EXISTS cliente(
+            CREATE TABLE IF NOT EXISTS clientes(
                 email VARCHAR(50) PRIMARY KEY NOT NULL,
                 nome VARCHAR(50) NOT NULL,
                 senha VARCHAR(50) NOT NULL
@@ -103,11 +103,20 @@ class BancoDeDados:
     def casdastrar_cliente(self, Cliente):
         try:
             cursor = self.conn.cursor()
-            cursor.execute("INSERT INTO produtos (email, nome, senha) VALUES (?, ?, ?, ?)",
+            cursor.execute("INSERT INTO clientes (email, nome, senha) VALUES (?, ?, ?, ?)",
                            (Cliente.get_email(), Cliente.get_nome(), Cliente.get_senha()))
             self.conn.commit()
             print("Cliente cadastrado com sucesso!")
         except Exception as e:
             self.conn.rollback()
             print("Erro ao cadastrado Cliente:", e)
+
+    def verificar_login(self, cliente):
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM cliente WHERE email=? AND senha=?", (cliente.get_email(), cliente.get_senha()))
+            resultado = cursor.fetchall()
+            return resultado
+        except Exception as e:
+            print("Erro ao verificar login:", e)
 
