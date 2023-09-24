@@ -7,7 +7,6 @@ class Cliente:
     def get_email(self):
         return self._email
     
-
     def set_email(self, email):
         if isinstance(email, str) and len(email.strip()) > 0 and email.count('@') == 1 and email.count(".") ==1:
             self._email = email
