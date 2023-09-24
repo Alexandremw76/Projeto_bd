@@ -15,7 +15,8 @@ class Produto:
     def get_nome(self):
         return self.nome
     def set_valor(self, valor):
-        if valor == "" or valor.isspace() or e_numero_float(valor) == False:
+        max_length=10
+        if valor == "" or valor.isspace() or e_numero_float(valor) == False or len(valor)>max_length:
             raise Exception("valor invalido")
         else:
             self.valor = float(valor)
@@ -24,7 +25,8 @@ class Produto:
         return self.valor
         
     def set_qtd(self, qtd):
-        if qtd == "" or qtd.isspace() or e_numero(qtd) == False:
+        max_length=10
+        if qtd == "" or qtd.isspace() or e_numero(qtd) == False or len(qtd)>max_length:
             raise Exception("qtd invalido")
         else:
             self.qtd = int(qtd)
