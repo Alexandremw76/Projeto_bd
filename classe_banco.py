@@ -116,7 +116,10 @@ class BancoDeDados:
             cursor = self.conn.cursor()
             cursor.execute("SELECT * FROM cliente WHERE email=? AND senha=?", (cliente.get_email(), cliente.get_senha()))
             resultado = cursor.fetchall()
-            return resultado
+            if (resultado):
+                return True
+            else:
+                return False
         except Exception as e:
             print("Erro ao verificar login:", e)
 
