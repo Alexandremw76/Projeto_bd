@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox # importar a classe messagebox
 from tkinter import ttk  # importar a classe ttk
 from classe_banco import *
-from inteface_compra_produtos import * 
+from interface_cadastrar_produto import * 
 nome_bd = "dados.db"
 meu_banco = BancoDeDados(nome_bd)
 
@@ -59,7 +59,7 @@ def interface_cadastrar_cliente():
 
     Torce_fla = tk.StringVar(janela_secundaria)
     Torce_fla.set("Sim")
-    Resposta = ["Sim", "Nao"]
+    Resposta = ["Sim", "Não"]
 
     flamengo_menu = tk.OptionMenu(janela_secundaria, Torce_fla, *Resposta)
     flamengo_menu.pack()
@@ -83,10 +83,8 @@ def cadastra_cliente(entrada_nome,entrada_email,entrada_senha,entrada_flamengo,e
             cliente1.set_email(entrada_email.get())
             cliente1.set_nome(entrada_nome.get())
             cliente1.set_senha(entrada_senha.get())
-            print(entrada_flamengo.get())
             cliente1.set_flamengo(entrada_flamengo.get())
             cliente1.set_onepiece(entrada_one.get())
-            print(cliente1.flamengo,cliente1.onepiece)
             meu_banco.conectar_bd(nome_bd)
             meu_banco.casdastrar_cliente(cliente1)
             messagebox.showinfo("Sucesso","Cliente cadastrado!")

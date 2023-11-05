@@ -7,11 +7,11 @@ from classe_banco import *
 nome_bd = "dados.db"
 meu_banco = BancoDeDados(nome_bd)
     
-def Carregar_dados_tabela(tabela): # carregar dados do bd para tabela
+def Carregar_dados_tabela(tabela,usuario): # carregar dados do bd para tabela
     meu_banco.conectar_bd(nome_bd)
     try:
         meu_banco.conectar_bd(nome_bd)
-        lista_de_produtos = meu_banco.listar_produtos()
+        lista_de_produtos = meu_banco.listar_produtos(usuario)
         tabela.delete(*tabela.get_children())
 
         for produto in lista_de_produtos:
@@ -21,7 +21,7 @@ def Carregar_dados_tabela(tabela): # carregar dados do bd para tabela
     finally:
         meu_banco.fechar_conexao()
 
-def adicionar_item_banco(tabela, nome, qtd, preco, tamanho):
+def adicionar_item_banco(tabela, nome, qtd, preco, tamanho,usuario):
     # Input validation
     nome_value = nome.get()
     preco_value = preco.get()
@@ -43,8 +43,8 @@ def adicionar_item_banco(tabela, nome, qtd, preco, tamanho):
         produto_.set_qtd(qtd_value)
         produto_.set_tam(tamanho.get())
         meu_banco.conectar_bd(nome_bd)
-        meu_banco.inserir_produto(produto_)
-        Carregar_dados_tabela(tabela)
+        meu_banco.inserir_produto(produto_,usuario)
+        Carregar_dados_tabela(tabela,usuario)
         nome.delete(0, tk.END)
         qtd.delete(0, tk.END)
         preco.delete(0, tk.END)
@@ -70,6 +70,7 @@ def get_id_produto_selecionado(tabela): # pegar do bd a id do produto selecionad
     if selecao:  # Se houver uma seleção
         for item in selecao:
             Produto_ = tabela.item(item, "values")  # Obtém os valores do item
+            print(int(Produto_[0]))
             return int(Produto_[0]) # retornar id do produto na selecionado atual
 
 def get_produto_selecionado_do_bd(tabela): # retorna os dados do produto selecioando(dados vem do banco de dados)
@@ -79,7 +80,7 @@ def get_produto_selecionado_do_bd(tabela): # retorna os dados do produto selecio
             Produto_ = tabela.item(item, "values")  # Obtém os valores do item
             return list(Produto_) # retornar produto selecionado atual
 
-def Atualizar_item_banco(tabela, nome, qtd, preco, tam):
+def Atualizar_item_banco(tabela, nome, qtd, preco, tam,usuario):
     selecao = tabela.selection()  # Item selecionado na tabela
 
     if not selecao:
@@ -134,8 +135,8 @@ def Atualizar_item_banco(tabela, nome, qtd, preco, tam):
             messagebox.showerror("Erro","Tamanho invalido")
     try:
         meu_banco.conectar_bd(nome_bd)
-        meu_banco.atualizar_produto(id_prod, produto_)
-        Carregar_dados_tabela(tabela)
+        meu_banco.atualizar_produto(id_prod, produto_,usuario)
+        Carregar_dados_tabela(tabela,usuario)
     except Exception as e:
         messagebox.showerror("Erro",str(e))
     finally:
@@ -172,9 +173,9 @@ def pesquisar_por_nome(tabela,nome,botao):
     else:
         messagebox.showerror("Erro","Campo nome esta vazio")
 
-def gerar_relatorio():
+def gerar_relatorio(root,usuario):
     meu_banco.conectar_bd(nome_bd)
-    estoque = meu_banco.listar_produtos()
+    estoque = meu_banco.listar_produtos(usuario)
     if estoque:
         janela_secundaria = tk.Toplevel(root)
         janela_secundaria.geometry("400x400")
@@ -186,7 +187,7 @@ def gerar_relatorio():
         valor_total = 0
         qtd_total = 0
         for iten in estoque:
-            valor_total +=  iten[3]
+            valor_total +=  iten[3] * iten[2]
             qtd_total += iten[2]
         tabela.insert("", "end", values=(qtd_total,valor_total))
         tabela.pack()
@@ -198,7 +199,54 @@ def gerar_relatorio():
         messagebox.showerror("error","banco vazio")
         meu_banco.fechar_conexao
 
-def criar_interface(root):
+def atualizar_tabela_vendas(vendas,tabela1):
+    tabela1.delete(*tabela1.get_children())
+    for item in vendas:
+            tabela1.insert("", "end", values=(str(item[0]), str(item[1]), str(item[2]), str(item[3]), str(item[4]), str(item[5]), str(item[6])))
+            tabela1.pack()
+       
+def efetivar_venda(tabela1,vendas):
+    selecao = tabela1.selection()  # Obtém a seleção atual
+    meu_banco.conectar_bd(nome_bd)
+    if selecao:
+        for item in selecao:
+            Produto_ = tabela1.item(item, "values")  # Obtém os valores do item
+            id_venda = int(Produto_[0])  # Obtém o ID da venda como um númeroa
+    meu_banco.efetivar_venda(id_venda)
+    atualizar_tabela_vendas(vendas,tabela1)
+
+def gerar_relatorio_vendas(root, usuario):
+    meu_banco.conectar_bd(nome_bd)
+    vendas = meu_banco.vendas_por_vendedor(usuario.get_email())
+    if vendas:
+        janela_secundaria = tk.Toplevel()
+        janela_secundaria.geometry("1000x300")
+        janela_secundaria.title("Relatorio")
+        tabela1 = ttk.Treeview(janela_secundaria, columns=(0, 1, 2, 3, 4, 5, 6))
+        tabela1.heading(0, text="ID venda")
+        tabela1.heading(1, text="Nome do produto vendido")
+        tabela1.heading(2, text="QTD de produtos vendidos")
+        tabela1.heading(3, text="Data da venda")
+        tabela1.heading(4, text="Metodo de pagamento")
+        tabela1.heading(5, text="Email do Comprador")
+        tabela1.heading(6, text="Compra foi efetivada ? ")
+        tabela1.column("#0", width=0)
+
+        atualizar_tabela_vendas(vendas,tabela1)
+
+        efitvar_venda = tk.Button(janela_secundaria, text="Efetivar venda", command=lambda: efetivar_venda(tabela1,vendas))
+        efitvar_venda.pack()
+
+        janela_secundaria.update()
+        botao_fechar = tk.Button(janela_secundaria, text="Fechar", command=janela_secundaria.destroy)
+        botao_fechar.pack()
+
+        meu_banco.fechar_conexao()
+    else:
+        messagebox.showerror("error", "Não há vendas")
+        meu_banco.fechar_conexao()
+
+def criar_interface_vender(root,usuario):
     # Cria a janela principal
     root.title("Crud")
     root.geometry("600x650")
@@ -248,23 +296,23 @@ def criar_interface(root):
 
 
 
-    adicionar_botao = tk.Button(root, text="Inserir Produto", command=lambda: adicionar_item_banco(tabela, entrada_nome,entrada_qtd,entrada_valor,tamanho_var)) # botao para adicionar produto
+    adicionar_botao = tk.Button(root, text="Inserir Produto", command=lambda: adicionar_item_banco(tabela, entrada_nome,entrada_qtd,entrada_valor,tamanho_var,usuario)) # botao para adicionar produto
     adicionar_botao.pack(pady=5)
-
 
     remover_botao = tk.Button(root, text="Remover Produto Selecionado", command=lambda: remover_item_banco(tabela)) # botao para reomver produto
     remover_botao.pack(pady=5)
 
-    atualizar_botao = tk.Button(root, text="Atualizar Produto Selecionado", command=lambda: Atualizar_item_banco(tabela,entrada_nome,entrada_qtd,entrada_valor,tamanho_var)) # atualiza produtos
+    atualizar_botao = tk.Button(root, text="Atualizar Produto Selecionado", command=lambda: Atualizar_item_banco(tabela,entrada_nome,entrada_qtd,entrada_valor,tamanho_var,usuario)) # atualiza produtos
     atualizar_botao.pack(pady=5)
 
     pesquisar_por_nome_botao = tk.Button(root, text="Filtrar Produto por nome", command=lambda: pesquisar_por_nome(tabela,entrada_nome,pesquisar_por_nome_botao)) # atualiza produtos
     pesquisar_por_nome_botao.pack(pady=5)
 
-    pesquisar_por_nome_botao = tk.Button(root, text="Gerar relatiro de estoque", command=lambda: gerar_relatorio()) # atualiza produtos
-    pesquisar_por_nome_botao.pack(pady=5)
-    Carregar_dados_tabela(tabela) # quando iniciar carregar dados do bd na tabela
+    gerar_relatorio_botao = tk.Button(root, text="Gerar relatiro de estoque", command=lambda: gerar_relatorio(root,usuario)) # atualiza produtos
+    gerar_relatorio_botao.pack(pady=5)
 
-root = Tk()
-criar_interface(root)
-root.mainloop()
+    gerar_relatorio_vendas_botao = tk.Button(root, text="Gerar relatiro de vendas", command=lambda: gerar_relatorio_vendas(root,usuario)) # atualiza produtos
+    gerar_relatorio_vendas_botao.pack(pady=5)
+
+    Carregar_dados_tabela(tabela,usuario) # quando iniciar carregar dados do bd na tabela
+
